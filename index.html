@@ -1,208 +1,243 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Truffle Store</title>
-  <!-- Add Bootstrap CSS -->
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    /* Custom styles */
-    .truffle-container { margin-bottom: 20px; }
-    .cart-item { margin-bottom: 10px; }
-    #checkout-popup { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0,0,0,0.1);z-index:100 }
-    #popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 50;}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odes Truffles</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
 
-  <!-- Truffle Products Grid -->
-  <div class="container">
-    <div class="row" id="truffle-container"></div>
-  </div>
-
-  <!-- Cart -->
-  <div>
-    <h3>Your Cart</h3>
-    <ul id="cart-list"></ul>
-    <p id="cart-total">Total: 0 PKR</p>
-    <button id="checkout-btn" class="btn btn-primary">Checkout</button>
-  </div>
-
-  <!-- Checkout Popup -->
-  <div id="checkout-popup">
-    <h4>Shipping Information</h4>
-    <form id="checkout-form">
-      <label for="user-name">Name:</label><br>
-      <input type="text" id="user-name" required><br>
-      <label for="user-phone">Phone:</label><br>
-      <input type="text" id="user-phone" required><br>
-      <label for="user-address">Address:</label><br>
-      <input type="text" id="user-address" required><br><br>
-      <button type="button" id="confirm-checkout" class="btn btn-success">Confirm Checkout</button>
-      <button type="button" id="close-popup" class="btn btn-danger">Cancel</button>
-    </form>
-  </div>
-
-  <!-- Overlay for the popup -->
-  <div id="popup-overlay"></div>
-
-  <!-- Hidden Template for Truffle -->
-  <div id="truffle-template" class="col-3 truffle-container" style="display: none;">
-    <div class="card">
-      <img src="" alt="Truffle Image" class="card-img-top">
-      <div class="card-body">
-        <h5 class="card-title truffle-name"></h5>
-        <p class="card-text truffle-desc"></p>
-        <input type="number" class="quantity-selector" value="1" min="1">
-        <button class="btn btn-primary add-to-cart-btn">Add to Cart</button>
-      </div>
+<div class="container mt-5">
+    <h1>Odes Truffles</h1>
+    <div class="row" id="product-grid">
+        <!-- Product grid will be populated by JavaScript -->
     </div>
-  </div>
 
-  <!-- Bootstrap JS and jQuery -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <div class="mt-4">
+        <h3>Cart</h3>
+        <ul id="cart-list">
+            <!-- Cart items will be listed here -->
+        </ul>
+        <button id="checkoutBtn" class="btn btn-success mt-3">Checkout</button>
+    </div>
+</div>
 
-  <!-- Your Custom Script -->
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      let cart = {};
-      const cartList = document.getElementById("cart-list");
-      const totalElement = document.getElementById("cart-total");
-      const popup = document.getElementById("checkout-popup");
-      const overlay = document.getElementById("popup-overlay");
-      const checkoutButton = document.getElementById("checkout-btn");
-      const closePopupButton = document.getElementById("close-popup");
-      const confirmCheckoutButton = document.getElementById("confirm-checkout");
+<!-- Modal Template for Product Details -->
+<div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productModalLabel">Product Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Product details will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="addToCartBtnModal">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-      // Open checkout popup
-      checkoutButton.addEventListener("click", () => {
-        popup.style.display = "block";
-        overlay.style.display = "block";
-      });
+<!-- Modal Template for Address Form -->
+<div class="modal fade" id="addressModal" tabindex="-1" role="dialog" aria-labelledby="addressModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addressModalLabel">Enter Shipping Address</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="address-form">
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" class="form-control" id="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="text" class="form-control" id="phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" class="form-control" id="city" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Full Address</label>
+                        <input type="text" class="form-control" id="address" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
-      // Close checkout popup
-      closePopupButton.addEventListener("click", () => {
-        popup.style.display = "none";
-        overlay.style.display = "none";
-      });
+<script>
+    // Array of products
+    const products = [
+        { name: 'Caramel Truffle', description: 'Delicious caramel-filled chocolate truffle.', price: 125 },
+        { name: 'Chocolate Truffle', description: 'Rich chocolate truffle with a creamy filling.', price: 125 },
+        { name: 'Strawberry Truffle', description: 'Sweet strawberry-flavored truffle.', price: 125 },
+        { name: 'Vanilla Truffle', description: 'Smooth vanilla truffle with a rich taste.', price: 125 },
+        { name: 'Hazelnut Truffle', description: 'A crunchy hazelnut-filled chocolate truffle.', price: 125 },
+        { name: 'Coffee Truffle', description: 'Coffee-flavored truffle for coffee lovers.', price: 125 },
+        { name: 'Mint Truffle', description: 'Refreshing mint chocolate truffle.', price: 125 },
+        { name: 'Pistachio Truffle', description: 'Creamy pistachio-filled chocolate truffle.', price: 125 }
+    ];
 
-      // Add to cart functionality
-      function addToCart(name, buttonElement) {
-        const quantityInput = buttonElement.parentElement.querySelector(".quantity-selector");
-        const quantity = parseInt(quantityInput.value);
-        if (cart[name]) {
-          cart[name].quantity += quantity;
-        } else {
-          cart[name] = { quantity, price: 125 };
-        }
-        updateCart();
-      }
+    let cart = [];
 
-      // Remove from cart functionality
-      function removeFromCart(name) {
-        delete cart[name];
-        updateCart();
-      }
+    // Function to display products
+    function displayProducts() {
+        const productGrid = $('#product-grid');
+        productGrid.empty(); // Clear existing grid
 
-      // Update quantity in the cart
-      function updateQuantity(name, quantity) {
-        if (quantity > 0) {
-          cart[name].quantity = quantity;
-        } else {
-          delete cart[name];
-        }
-        updateCart();
-      }
-
-      // Update cart display
-      function updateCart() {
-        cartList.innerHTML = "";
-        let totalCost = 0;
-        for (const name in cart) {
-          const item = cart[name];
-          const cartItem = document.createElement("li");
-          cartItem.classList.add("cart-item");
-          cartItem.innerHTML = `
-            ${name} - ${item.quantity} x 125 PKR = ${item.quantity * item.price} PKR
-            <input type="number" value="${item.quantity}" min="1" class="cart-quantity" data-name="${name}">
-            <button class="btn btn-sm btn-danger remove-btn" data-name="${name}">Remove</button>
-          `;
-          cartList.appendChild(cartItem);
-          totalCost += item.quantity * item.price;
-        }
-        totalElement.textContent = `Total: ${totalCost} PKR`;
-
-        // Add Event Listeners for Remove & Update Quantity
-        document.querySelectorAll(".remove-btn").forEach((btn) =>
-          btn.addEventListener("click", () => removeFromCart(btn.dataset.name))
-        );
-        document.querySelectorAll(".cart-quantity").forEach((input) =>
-          input.addEventListener("change", (e) =>
-            updateQuantity(e.target.dataset.name, parseInt(e.target.value))
-          )
-        );
-      }
-
-      // Handle confirm checkout
-      confirmCheckoutButton.addEventListener("click", () => {
-        const name = document.getElementById("user-name").value;
-        const phone = document.getElementById("user-phone").value;
-        const address = document.getElementById("user-address").value;
-
-        if (!name || !phone || !address) {
-          alert("Please fill in all shipping details.");
-          return;
-        }
-
-        // Generate WhatsApp message
-        let message = `Order Details:\n`;
-        let totalCost = 0;
-        for (const truffle in cart) {
-          const item = cart[truffle];
-          message += `${truffle}: ${item.quantity} x 125 PKR = ${item.quantity * item.price} PKR\n`;
-          totalCost += item.quantity * item.price;
-        }
-        message += `Total: ${totalCost} PKR\n\n`;
-        message += `Shipping Info:\nName: ${name}\nPhone: ${phone}\nAddress: ${address}`;
-
-        // Open WhatsApp with the generated message
-        const encodedMessage = encodeURIComponent(message);
-        const whatsappURL = `https://wa.me/923004251375?text=${encodedMessage}`; // Replace 923000000000 with your WhatsApp number
-        window.open(whatsappURL, "_blank");
-
-        // Close the popup
-        popup.style.display = "none";
-        overlay.style.display = "none";
-      });
-
-      // Populate Truffles
-      const truffleContainer = document.getElementById("truffle-container");
-      const truffleData = [
-        { name: "Caramel Truffle", desc: "Sweet caramel filling inside.", img: "https://via.placeholder.com/150" },
-        { name: "Hazelnut Truffle", desc: "Crunchy hazelnut center.", img: "https://via.placeholder.com/150" },
-        { name: "Dark Chocolate Truffle", desc: "Rich dark chocolate taste.", img: "https://via.placeholder.com/150" },
-        { name: "Milk Chocolate Truffle", desc: "Creamy milk chocolate truffle.", img: "https://via.placeholder.com/150" },
-        { name: "Mint Truffle", desc: "Minty fresh center.", img: "https://via.placeholder.com/150" },
-        { name: "Orange Truffle", desc: "Citrus-flavored center.", img: "https://via.placeholder.com/150" },
-        { name: "Raspberry Truffle", desc: "Sweet raspberry center.", img: "https://via.placeholder.com/150" },
-        { name: "Peanut Butter Truffle", desc: "Smooth peanut butter filling.", img: "https://via.placeholder.com/150" }
-      ];
-
-      truffleData.forEach(truffle => {
-        const truffleElement = document.getElementById("truffle-template").cloneNode(true);
-        truffleElement.style.display = "block";
-        truffleElement.querySelector(".truffle-name").textContent = truffle.name;
-        truffleElement.querySelector(".truffle-desc").textContent = truffle.desc;
-        truffleElement.querySelector(".card-img-top").src = truffle.img;
-        truffleElement.querySelector(".add-to-cart-btn").addEventListener("click", function () {
-          addToCart(truffle.name, this);
+        products.forEach((product, index) => {
+            productGrid.append(`
+                <div class="col-md-3 mb-4 truffle">
+                    <div class="card">
+                        <img class="card-img-top" src="https://via.placeholder.com/150" alt="${product.name}">
+                        <div class="card-body">
+                            <h5 class="card-title">${product.name}</h5>
+                            <p class="card-text">${product.description}</p>
+                            <p class="card-text">Price: PKR ${product.price}</p>
+                            <button class="btn btn-info details-btn" data-toggle="modal" data-target="#productModal" data-index="${index}">Details</button>
+                            <button class="btn btn-primary add-to-cart-btn" data-index="${index}">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+            `);
         });
-        truffleContainer.appendChild(truffleElement);
-      });
+    }
+
+    // Display products when page loads
+    $(document).ready(function() {
+        displayProducts();
+
+        // Handle "Details" button click
+        $(document).on('click', '.details-btn', function() {
+            const index = $(this).data('index');
+            const product = products[index];
+
+            // Populate modal with product details
+            $('#productModalLabel').text(product.name);
+            $('.modal-body').html(`
+                <p>${product.description}</p>
+                <p>Price: PKR ${product.price}</p>
+                <label for="quantity">Quantity:</label>
+                <input type="number" id="quantity" class="form-control" value="1" min="1">
+            `);
+
+            // Set the product index to add to cart from modal
+            $('#addToCartBtnModal').off('click').on('click', function() {
+                const quantity = parseInt($('#quantity').val());
+                addToCart(product, quantity);
+                $('#productModal').modal('hide');
+            });
+        });
+
+        // Handle "Add to Cart" button on the product page
+        $(document).on('click', '.add-to-cart-btn', function() {
+            const index = $(this).data('index');
+            const product = products[index];
+            const quantity = 1; // Default quantity is 1 for this button
+
+            addToCart(product, quantity);
+        });
+
+        // Handle checkout (open address modal)
+        $('#checkoutBtn').click(function() {
+            $('#addressModal').modal('show');
+        });
     });
-  </script>
+
+    // Function to add product to cart
+    function addToCart(product, quantity) {
+        const cartItem = cart.find(item => item.name === product.name);
+        
+        if (cartItem) {
+            cartItem.quantity += quantity;
+        } else {
+            cart.push({ ...product, quantity });
+        }
+
+        updateCart();
+    }
+
+    // Function to update cart
+    function updateCart() {
+        const cartList = $('#cart-list');
+        cartList.empty();
+
+        cart.forEach(item => {
+            cartList.append(`
+                <li>
+                    ${item.name} (x${item.quantity}) - PKR ${item.price * item.quantity} 
+                    <input type="number" class="form-control quantity-input" data-name="${item.name}" value="${item.quantity}" min="1" style="width: 60px; display: inline-block;">
+                    <button class="btn btn-danger btn-sm remove-item" data-name="${item.name}">Remove</button>
+                </li>
+            `);
+        });
+    }
+
+    // Handle quantity change in the cart
+    $(document).on('change', '.quantity-input', function() {
+        const productName = $(this).data('name');
+        const newQuantity = parseInt($(this).val());
+
+        const cartItem = cart.find(item => item.name === productName);
+        if (cartItem) {
+            cartItem.quantity = newQuantity;
+        }
+
+        updateCart();
+    });
+
+    // Handle item removal from cart
+    $(document).on('click', '.remove-item', function() {
+        const productName = $(this).data('name');
+        cart = cart.filter(item => item.name !== productName);
+        updateCart();
+    });
+
+    // Handle address form submission
+    $('#address-form').submit(function(e) {
+        e.preventDefault();
+
+        const name = $('#name').val();
+        const phone = $('#phone').val();
+        const city = $('#city').val();
+        const address = $('#address').val();
+
+        // Prepare WhatsApp message
+        let message = "Order Details:\n";
+        cart.forEach(item => {
+            message += `${item.name} (x${item.quantity}) - PKR ${item.price * item.quantity}\n`;
+        });
+        message += `\nTotal: PKR ${cart.reduce((total, item) => total + (item.price * item.quantity), 0)}\n`;
+        message += `\nShipping Address:\nName: ${name}\nPhone: ${phone}\nCity: ${city}\nAddress: ${address}\n`;
+
+        // Open WhatsApp with the message (this will open WhatsApp with a pre-filled message)
+        const phoneNumber = '923064759958'; // Your WhatsApp business number
+        const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        window.open(url, '_blank');
+
+        // Close modal after submission
+        $('#addressModal').modal('hide');
+
+        // Show Thank You message
+        alert('Thank you for your order!');
+    });
+</script>
 
 </body>
 </html>
